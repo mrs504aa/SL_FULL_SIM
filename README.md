@@ -1,4 +1,5 @@
-# Programs used to simulate absorption spectra of superradiance lattices (SLs)
+# SL simulation with sublevels
+* Programs used to simulate absorption spectra of superradiance lattices (SLs).
 * Files with name ```Type_*_Main.jl``` are programs used to simulate the velocity resolved absorption spectra for different SL configurations.
 * Files with name ```Floquet_2D_Solver_*.jl``` are solvers modified from https://github.com/qutip/QuantumToolbox.jl/blob/main/src/steadystate.jl.
 * Before using the code, make sure to activate the Julia project environment and install all required packages by running the following steps in REPL:
