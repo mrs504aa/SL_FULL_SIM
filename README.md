@@ -8,4 +8,3 @@
   Pkg.activate(".")      # Activate the current project environment
   Pkg.instantiate()      # Install all dependencies specified in the project
   ```
-  These steps are essential to ensure that all necessary packages are installed for the code to run properly.
