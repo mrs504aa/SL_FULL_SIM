@@ -402,317 +402,37 @@ function Calculate_Obs(P::HamiltonianParas, FileName::String)
     close(File)
 end
 
-P = HamiltonianParas()
-P.Omega_b = 0.0
-H_0, H_p1, H_m1, H_p2, H_m2 = Type_I_Hamiltonian(P)
-J_Set = Jumping_Operators(P)
-Absorption_Ops = Type_I_Absorption_Operators(P)
-SP_Ops = Type_I_Absorption_Operators_SP(P)
+for a in 0:1
+    for b in 0:1
+        P = HamiltonianParas()
+        P.theta_p = a * 0.5 * pi
+        P.theta_b = b * 0.5 * pi
+        sp = "z"
+        sb = "z"
+        if a == 1
+            sp = "y"
+        end
+        if b == 1
+            sb = "y"
+        end
+        P.Omega_cf = 20.0
+        P.Omega_cb = 0.0
+        P.Delta_c = 0.0
+        Calculate_Obs(P, "Type_I_z$(sp)$(sb)_eit.h5")
 
-# File = h5open("Debug.h5", "w")
-# T0 = imag.(Array(liouvillian(H_0, J_Set).data))
-# write(File, "L_0", T0)
-# write(File, "L_0_diag", diag(T0))
-# close(File)
+        P.Omega_cf = 0.0
+        P.Omega_cb = 20.0
+        P.Delta_c = 0.0
+        Calculate_Obs(P, "Type_I_z$(sp)$(sb)_reit.h5")
 
-Delta_d_list = collect(range(-50, 50, 50))
-Delta_p_list = collect(range(-50, 50, 50))
-Abs_1_ref_set = zeros(length(Delta_p_list), length(Delta_d_list))
-Abs_2_ref_set = zeros(length(Delta_p_list), length(Delta_d_list))
-Abs_3_ref_set = zeros(length(Delta_p_list), length(Delta_d_list))
-Pop_pm1_wb_set = zeros(length(Delta_p_list), length(Delta_d_list))
-Pop_0_wb_set = zeros(length(Delta_p_list), length(Delta_d_list))
-Pop_e0_wb_set = zeros(length(Delta_p_list), length(Delta_d_list))
-Pop_set = zeros(16, length(Delta_p_list), length(Delta_d_list))
-Pop_wb_set = zeros(16, length(Delta_p_list), length(Delta_d_list))
-
-SP_Set = zeros(3, length(Delta_p_list), length(Delta_d_list))
-SP_Set_wb = zeros(3, length(Delta_p_list), length(Delta_d_list))
-
-Prog = Progress(length(Delta_d_list) * length(Delta_p_list))
-for i in eachindex(Delta_d_list)
-    for j in eachindex(Delta_p_list)
-        P.Delta_p = Delta_p_list[j]
-        H_0, H_p1, H_m1, H_p2, H_m2 = Type_I_Hamiltonian(P)
-        ρ_ss = steadystate_fourier_2d(
-            H_0,
-            H_p1,
-            H_m1,
-            H_p2,
-            H_m2,
-            Delta_d_list[i],
-            0.0,
-            J_Set;
-            n_max1=10,
-            n_max2=0,
-        )
-
-        Abs_1_ref_set[j, i] = abs.(imag(tr(ρ_ss[1, 0] * Absorption_Ops[1])))
-        Abs_2_ref_set[j, i] = abs.(imag(tr(ρ_ss[1, 0] * Absorption_Ops[2])))
-        Abs_3_ref_set[j, i] = abs.(imag(tr(ρ_ss[1, 0] * Absorption_Ops[3])))
-        Pop_pm1_wb_set[j, i] = real(ρ_ss[0, 0][1, 1])
-        Pop_0_wb_set[j, i] = real(ρ_ss[0, 0][2, 2])
-        Pop_e0_wb_set[j, i] = real(ρ_ss[0, 0][14, 14])
-        Pop_wb_set[:, j, i] = real.(diag(ρ_ss[0, 0]))
-
-        SP_Set_wb[1, j, i] = abs.(imag(tr(ρ_ss[1, 0] * SP_Ops[1])))
-        SP_Set_wb[2, j, i] = abs.(imag(tr(ρ_ss[1, 0] * SP_Ops[2])))
-        SP_Set_wb[3, j, i] = abs.(imag(tr(ρ_ss[1, 0] * SP_Ops[3])))
-
-        ProgressMeter.next!(Prog)
+        P.Omega_cf = 15.0
+        P.Omega_cb = 15.0
+        P.Delta_c = 0.0
+        Calculate_Obs(P, "Type_I_z$(sp)$(sb)_sw.h5")
+        
+        P.Omega_cf = 10.0
+        P.Omega_cb = 10.0
+        P.Delta_c = -20.0
+        Calculate_Obs(P, "Type_I_z$(sp)$(sb)_det.h5")
     end
 end
-
-max1 = maximum(abs.(Abs_1_ref_set))
-max2 = maximum(abs.(Abs_2_ref_set))
-max3 = maximum(abs.(Abs_3_ref_set))
-max = maximum([max1, max2, max3])
-max == 0 ? max = 1 : nothing
-
-Fig = Figure(size=(1000, 400))
-Axe = Axis(
-    Fig[1, 1],
-    aspect=1,
-    xlabel="Δ_p (MHz)",
-    ylabel="Δ_d (MHz)",
-)
-
-heatmap!(
-    Axe,
-    Delta_p_list,
-    Delta_d_list,
-    Abs_1_ref_set,
-    colormap=:seaborn_icefire_gradient,
-    colorrange=(-max, max)
-)
-
-Axe = Axis(
-    Fig[1, 2],
-    aspect=1,
-    xlabel="Δ_p (MHz)",
-    ylabel="Δ_d (MHz)",
-)
-heatmap!(
-    Axe,
-    Delta_p_list,
-    Delta_d_list,
-    Abs_2_ref_set,
-    colormap=:seaborn_icefire_gradient,
-    colorrange=(-max, max)
-)
-
-Axe = Axis(
-    Fig[1, 3],
-    aspect=1,
-    xlabel="Δ_p (MHz)",
-    ylabel="Δ_d (MHz)",
-)
-heatmap!(
-    Axe,
-    Delta_p_list,
-    Delta_d_list,
-    Abs_3_ref_set,
-    colormap=:seaborn_icefire_gradient,
-    colorrange=(-max, max)
-)
-
-display(Fig)
-save("Type_I_No_Pumping.png", Fig)
-
-Abs_1_diff_set = zeros(length(Delta_d_list), length(Delta_p_list))
-Abs_2_diff_set = zeros(length(Delta_d_list), length(Delta_p_list))
-Abs_3_diff_set = zeros(length(Delta_d_list), length(Delta_p_list))
-
-Abs_1_obs_set = zeros(length(Delta_p_list), length(Delta_d_list))
-Abs_2_obs_set = zeros(length(Delta_p_list), length(Delta_d_list))
-Abs_3_obs_set = zeros(length(Delta_p_list), length(Delta_d_list))
-
-Pop_pm1_set = zeros(length(Delta_p_list), length(Delta_d_list))
-Pop_0_set = zeros(length(Delta_p_list), length(Delta_d_list))
-Pop_e0_set = zeros(length(Delta_p_list), length(Delta_d_list))
-
-Prog = Progress(length(Delta_d_list) * length(Delta_p_list))
-P = HamiltonianParas()
-for i in eachindex(Delta_d_list)
-    for j in eachindex(Delta_p_list)
-        P.Delta_p = Delta_p_list[j]
-        P.Delta_b = Delta_d_list[i]
-        H_0, H_p1, H_m1, H_p2, H_m2 = Type_I_Hamiltonian(P)
-        ρ_ss = steadystate_fourier_2d(
-            H_0,
-            H_p1,
-            H_m1,
-            H_p2,
-            H_m2,
-            Delta_d_list[i],
-            0.0,
-            J_Set;
-            n_max1=10,
-            n_max2=0,
-        )
-
-        Abs_1_diff_set[j, i] = abs.(imag(tr(ρ_ss[1, 0] * Absorption_Ops[1])))
-        Abs_2_diff_set[j, i] = abs.(imag(tr(ρ_ss[1, 0] * Absorption_Ops[2])))
-        Abs_3_diff_set[j, i] = abs.(imag(tr(ρ_ss[1, 0] * Absorption_Ops[3])))
-
-        Pop_pm1_set[j, i] = real(ρ_ss[0, 0][1, 1])
-        Pop_0_set[j, i] = real(ρ_ss[0, 0][2, 2])
-        Pop_e0_set[j, i] = real(ρ_ss[0, 0][14, 14])
-        Pop_set[:, j, i] = real.(diag(ρ_ss[0, 0]))
-
-        SP_Set[1, j, i] = abs.(imag(tr(ρ_ss[1, 0] * SP_Ops[1])))
-        SP_Set[2, j, i] = abs.(imag(tr(ρ_ss[1, 0] * SP_Ops[2])))
-        SP_Set[3, j, i] = abs.(imag(tr(ρ_ss[1, 0] * SP_Ops[3])))
-
-        ProgressMeter.next!(Prog)
-    end
-end
-
-Abs_1_obs_set = -Abs_1_diff_set .+ Abs_1_ref_set
-Abs_2_obs_set = -Abs_2_diff_set .+ Abs_2_ref_set
-Abs_3_obs_set = -Abs_3_diff_set .+ Abs_3_ref_set
-
-max1 = maximum(abs.(Abs_1_obs_set))
-max2 = maximum(abs.(Abs_2_obs_set))
-max3 = maximum(abs.(Abs_3_obs_set))
-max = maximum([max1, max2, max3])
-max == 0 ? max = 1 : nothing
-
-Fig = Figure(size=(1000, 400))
-Axe = Axis(
-    Fig[1, 1],
-    aspect=1,
-    xlabel="Δ_p (MHz)",
-    ylabel="Δ_b (MHz)",
-)
-
-heatmap!(
-    Axe,
-    Delta_p_list,
-    Delta_d_list,
-    Abs_1_obs_set,
-    colormap=:seaborn_icefire_gradient,
-    colorrange=(-max, max)
-)
-
-Axe = Axis(
-    Fig[1, 2],
-    aspect=1,
-    xlabel="Δ_p (MHz)",
-    ylabel="Δ_d (MHz)",
-)
-heatmap!(
-    Axe,
-    Delta_p_list,
-    Delta_d_list,
-    Abs_2_obs_set,
-    colormap=:seaborn_icefire_gradient,
-    colorrange=(-max, max)
-)
-
-Axe = Axis(
-    Fig[1, 3],
-    aspect=1,
-    xlabel="Δ_p (MHz)",
-    ylabel="Δ_d (MHz)",
-)
-heatmap!(
-    Axe,
-    Delta_p_list,
-    Delta_d_list,
-    Abs_3_obs_set,
-    colormap=:seaborn_icefire_gradient,
-    colorrange=(-max, max)
-)
-
-display(Fig)
-save("Type_I_Obs.png", Fig)
-
-# Fig = Figure(size=(1000, 400))
-# Axe = Axis(
-#     Fig[1, 1],
-#     aspect=1,
-#     xlabel="Δ_p (MHz)",
-#     ylabel="Δ_b (MHz)",
-# )
-
-# heatmap!(
-#     Axe,
-#     Delta_p_list,
-#     Delta_d_list,
-#     Pop_pm1_wb_set .- Pop_pm1_set,
-#     colormap=:seaborn_icefire_gradient,
-#     colorrange=(-0.5, 0.5)
-# )
-
-# Axe = Axis(
-#     Fig[1, 2],
-#     aspect=1,
-#     xlabel="Δ_p (MHz)",
-#     ylabel="Δ_b (MHz)",
-# )
-
-# heatmap!(
-#     Axe,
-#     Delta_p_list,
-#     Delta_d_list,
-#     Pop_0_wb_set .- Pop_0_set,
-#     colormap=:seaborn_icefire_gradient,
-#     colorrange=(-0.5, 0.5)
-# )
-
-# display(Fig)
-# save("Type_I_Pop_diff.png", Fig)
-
-File = h5open("Type_I_Obs.h5", "w")
-write(File, "Delta_p_list", Delta_p_list)
-write(File, "Delta_d_list", Delta_d_list)
-write(File, "A1", Abs_1_obs_set)
-write(File, "A2", Abs_2_obs_set)
-write(File, "A3", Abs_3_obs_set)
-write(File, "Pe0wb", Pop_e0_wb_set)
-write(File, "Pe0", Pop_e0_set)
-write(File, "Ppm1wb", Pop_pm1_wb_set)
-write(File, "P0wb", Pop_0_wb_set)
-write(File, "Ppm1", Pop_pm1_set)
-write(File, "Ppm1_diff", Pop_pm1_set .- Pop_pm1_wb_set)
-write(File, "P0", Pop_0_set)
-write(File, "Pop_set", Pop_set)
-write(File, "Pop_wb_set", Pop_wb_set)
-write(File, "Pop_set_diff", Pop_wb_set .- Pop_set)
-write(File, "SP_Set", SP_Set)
-write(File, "SP_Set_wb", SP_Set_wb)
-write(File, "SP_Set_diff", SP_Set_wb .- SP_Set)
-close(File)
-
-# for a in 0:1
-#     for b in 0:1
-#         P = HamiltonianParas()
-#         P.theta_p = a * 0.5 * pi
-#         P.theta_b = b * 0.5 * pi
-#         sp = "z"
-#         sb = "z"
-#         if a == 1
-#             sp = "y"
-#         end
-#         if b == 1
-#             sb = "y"
-#         end
-#         P.Omega_cf = 20.0
-#         P.Omega_cb = 0.0
-#         P.Delta_c = 0.0
-#         Calculate_Obs(P, "Type_I_z$(sp)$(sb)_eit.h5")
-#         P.Omega_cf = 0.0
-#         P.Omega_cb = 20.0
-#         P.Delta_c = 0.0
-#         Calculate_Obs(P, "Type_I_z$(sp)$(sb)_reit.h5")
-#         P.Omega_cf = 15.0
-#         P.Omega_cb = 15.0
-#         P.Delta_c = 0.0
-#         Calculate_Obs(P, "Type_I_z$(sp)$(sb)_sw.h5")
-#         P.Omega_cf = 10.0
-#         P.Omega_cb = 10.0
-#         P.Delta_c = -20.0
-#         Calculate_Obs(P, "Type_I_z$(sp)$(sb)_det.h5")
-#     end
-# end

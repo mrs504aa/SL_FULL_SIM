@@ -354,17 +354,17 @@ P.Omega_cb = 0.0
 P.Delta_c = 0.0
 Calculate_Obs(P, 1)
 
-# P.Omega_cf = 0.0
-# P.Omega_cb = 20.0 * cg_c(3, 11) / cg_c(4, 8)
-# P.Delta_c = 0.0
-# Calculate_Obs(P, 2)
+P.Omega_cf = 0.0
+P.Omega_cb = 20.0 * cg_c(3, 11) / cg_c(4, 8)
+P.Delta_c = 0.0
+Calculate_Obs(P, 2)
 
-# P.Omega_cf = 15.0 * cg_c(3, 11) / cg_c(4, 8)
-# P.Omega_cb = 15.0 * cg_c(3, 11) / cg_c(4, 8)
-# P.Delta_c = 0.0
-# Calculate_Obs(P, 3)
+P.Omega_cf = 15.0 * cg_c(3, 11) / cg_c(4, 8)
+P.Omega_cb = 15.0 * cg_c(3, 11) / cg_c(4, 8)
+P.Delta_c = 0.0
+Calculate_Obs(P, 3)
 
-# P.Omega_cf = 10.0 * cg_c(3, 11) / cg_c(4, 8)
-# P.Omega_cb = 10.0 * cg_c(3, 11) / cg_c(4, 8)
-# P.Delta_c = -20.0
-# Calculate_Obs(P, 4)
+P.Omega_cf = 10.0 * cg_c(3, 11) / cg_c(4, 8)
+P.Omega_cb = 10.0 * cg_c(3, 11) / cg_c(4, 8)
+P.Delta_c = -20.0
+Calculate_Obs(P, 4)

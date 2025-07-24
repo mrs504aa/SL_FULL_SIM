@@ -301,16 +301,16 @@ function Type_III_Absorption_Operators(P::HamiltonianParas)
 end
 
 P = HamiltonianParas()
-P.Omega_c1b = 0.0
-P.Omega_c2b = 0.0
-P.Omega_c1f = 20.0
-P.Omega_c2b = 0.0
+P.Omega_c1b = 10.0
+P.Omega_c2b = 10.0
+P.Omega_c1f = 10.0
+P.Omega_c2b = 10.0
 P.b_couple = -1
 J_Set = Jumping_Operators(P)
 Absorption_Ops = Type_III_Absorption_Operators(P)
 P.Omega_b = 0.0
 
-P.Delta_c1 = 0 # (0.23 * 1 + 0.7 * 2) * P.magnetic_B
+P.Delta_c1 = (0.23 * 1 + 0.7 * 2) * P.magnetic_B
 P.Delta_c2 = (0.23 * -1 + 0.7 * 0) * P.magnetic_B
 
 Delta_d_list = collect(range(-200, 200, 201))
